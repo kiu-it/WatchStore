@@ -1,0 +1,100 @@
+﻿<div id="chatbot-container">
+    <div id="chatbot-header" onclick="toggleChat()">
+        💬 Chat tư vấn đồng hồ
+    </div>
+    <div id="chatbot-body" style="display:none;">
+        <div id="chat-messages"></div>
+        <div id="chat-input">
+            <input type="text" id="chatMessage" placeholder="Nhập câu hỏi..." />
+            <button onclick="sendChat()">Gửi</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    #chatbot-container {
+        position: fixed;
+        bottom: 50px;
+        right: 20px;
+        width: 280px;
+        font-family: Arial, sans-serif;
+        z-index: 9999;
+    }
+
+    #chatbot-header {
+        background: #222;
+        color: #fff;
+        padding: 10px;
+        cursor: pointer;
+        border-radius: 10px 10px 0 0;
+    }
+
+    #chatbot-body {
+        background: #fff;
+        border: 1px solid #ccc;
+        border-top: none;
+        max-height: 400px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #chat-messages {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        font-size: 14px;
+    }
+
+    #chat-input {
+        display: flex;
+        border-top: 1px solid #ddd;
+    }
+
+        #chat-input input {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            outline: none;
+        }
+
+        #chat-input button {
+            padding: 8px 12px;
+            background: #222;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+    .message-user {
+        text-align: right;
+        margin: 5px 0;
+        color: #007bff;
+    }
+
+    .message-bot {
+        text-align: left;
+        margin: 5px 0;
+        color: #333;
+    }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+function toggleChat() {
+    $("#chatbot-body").toggle();
+}
+
+function sendChat() {
+    var msg = $("#chatMessage").val();
+    if (msg.trim() === "") return;
+
+    $("#chat-messages").append("<div class='message-user'><b>Bạn:</b> " + msg + "</div>");
+    $("#chatMessage").val("");
+
+    $.post("/Chat/Ask", { userMessage: msg }, function(data) {
+        $("#chat-messages").append("<div class='message-bot'><b>Bot:</b> " + data.response.replace(/\n/g, "<br>") + "</div>");
+        $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+    });
+}
+</script>
+

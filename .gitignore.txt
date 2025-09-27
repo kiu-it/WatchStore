@@ -1,0 +1,4 @@
+WatchStore/.vs/
+WatchStore/packages/
+WatchStore/*/bin/
+WatchStore/*/obj/

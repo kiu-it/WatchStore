@@ -1,0 +1,36 @@
+﻿
+@{
+    ViewBag.Title = "Kết quả thanh toán VNPay";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // layout chính
+    var vnp_ResponseCode = Request.QueryString["vnp_ResponseCode"];
+    var vnp_TransactionNo = Request.QueryString["vnp_TransactionNo"];
+    var vnp_TxnRef = Request.QueryString["vnp_TxnRef"];
+    var vnp_Amount = Request.QueryString["vnp_Amount"];
+}
+
+<div class="container mt-5">
+    <h2 class="text-center">Kết quả thanh toán</h2>
+
+    @if (vnp_ResponseCode == "00")
+    {
+        <div class="alert alert-success text-center">
+            ✔ Thanh toán thành công!<br />
+            <strong>Mã giao dịch:</strong> @vnp_TransactionNo <br />
+            <strong>Mã đơn hàng:</strong> @vnp_TxnRef <br />
+            <strong>Số tiền:</strong> @(Convert.ToInt64(vnp_Amount)/100) VND
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger text-center">
+            ✘ Thanh toán thất bại!<br />
+            <strong>Mã lỗi:</strong> @vnp_ResponseCode <br />
+            <strong>Mã đơn hàng:</strong> @vnp_TxnRef
+        </div>
+    }
+
+    <div class="text-center mt-4">
+        <a href="@Url.Action("Index","Site")" class="btn btn-primary">Về trang chủ</a>
+        <a href="@Url.Action("Order","Account")" class="btn btn-success">Xem đơn hàng</a>
+    </div>
+</div>

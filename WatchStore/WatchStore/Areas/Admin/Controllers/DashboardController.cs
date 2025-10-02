@@ -52,5 +52,47 @@ namespace WatchStore.Areas.Admin.Controllers
 
             return View();
         }
+
+        [HttpGet]
+        public JsonResult GetDashboardData(int month, int year)
+        {
+            var countSuccess = db.Orders.Where(m => m.Status == 3 && m.CreateDate.Month == month && m.CreateDate.Year == year).Count();
+            var countCancel = db.Orders.Where(m => m.Trash == 1 && m.CreateDate.Month == month && m.CreateDate.Year == year).Count();
+            var countWaiting = db.Orders.Where(m => m.Status == 1 && m.Trash != 1 && m.CreateDate.Month == month && m.CreateDate.Year == year).Count();
+            var countSending = db.Orders.Where(m => m.Status == 2 && m.Trash != 1 && m.CreateDate.Month == month && m.CreateDate.Year == year).Count();
+
+            int days = DateTime.DaysInMonth(year, month);
+            List<double> list = new List<double>();
+
+            for (int i = 1; i <= days; i++)
+            {
+                var ordersInDay = db.Orders.Where(m => m.Status == 3 &&
+                                                       m.CreateDate.Month == month &&
+                                                       m.CreateDate.Year == year &&
+                                                       m.CreateDate.Day == i).ToList();
+
+                double sum = 0;
+                foreach (var order in ordersInDay)
+                {
+                    sum += db.Orderdetails
+                             .Where(m => m.OrderId == order.Id)
+                             .Sum(m => m.Price * m.Quantity);
+                }
+                list.Add(sum);
+            }
+
+            return Json(new
+            {
+                success = true,
+                month,
+                year,
+                countSuccess,
+                countCancel,
+                countWaiting,
+                countSending,
+                dailyRevenue = list
+            }, JsonRequestBehavior.AllowGet);
+        }
+
     }
 }

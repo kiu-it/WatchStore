@@ -101,70 +101,95 @@
 
 
     </div>
-    <h1>Thống kê doanh thu tháng @ViewBag.ThisMonth năm @ViewBag.ThisYear</h1>
-    <div id="piechart" style="width:30%;float:left;height:400px"></div>
-    <div id="chart_div" style="width: 70%;float: left; height: 400px;overflow-x: auto;white-space: nowrap;"></div>
+    <h1>Thống kê doanh thu</h1>
+    <div style="margin-bottom: 20px;">
+        <label>Chọn tháng: </label>
+        <select id="monthSelect">
+            @for (int i = 1; i <= 12; i++)
+            {
+                <option value="@i" @(i == ViewBag.ThisMonth ? "selected" : "")>Tháng @i</option>
+            }
+        </select>
 
-</div>
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script type="text/javascript">
-    // Load google charts
-    google.charts.load('current', { 'packages': ['corechart'] });
-    google.charts.setOnLoadCallback(drawChart);
+        <label>Chọn năm: </label>
+        <select id="yearSelect">
+            @for (int y = DateTime.Now.Year - 3; y <= DateTime.Now.Year; y++)
+            {
+                <option value="@y" @(y == ViewBag.ThisYear ? "selected" : "")>@y</option>
+            }
+        </select>
+    </div>
+    <div id="piechart" style="width:30%;float:left;height:400px;"></div>
+    <div id="chart_div" style="width:70%;float:left;height:400px;"></div>
 
-    // Draw the chart and set the chart values
-    function drawChart() {
-        var data = google.visualization.arrayToDataTable([
-            ['Task', 'Tình Trạng'],
-            ['Thành công', @ViewBag.countOrderSuccessThisMouth],
-            ['Đã hủy', @ViewBag.countOrderCancelThisMouth],
-            ['Đang chờ', @ViewBag.countOrderWaitingThisMouth],
-            ['Đang gửi', @ViewBag.countOrderSendingThisMouth]
-        ]);
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
 
-        var options = { 'title': 'Trạng thái'};
+    <script>
+        // Load Google Charts
+        google.charts.load('current', { packages: ['corechart', 'bar'] });
 
-        var chart = new google.visualization.PieChart(document.getElementById('piechart'));
-        chart.draw(data, options);
-    }
-</script>
-<script type="text/javascript">
-    google.charts.load('current', { 'packages': ['bar'] });
-    google.charts.setOnLoadCallback(drawStuff);
+        // Hàm vẽ lại biểu đồ
+        function drawCharts(data) {
+            // Pie Chart
+            var pieData = google.visualization.arrayToDataTable([
+                ['Task', 'Tình Trạng'],
+                ['Thành công', data.countSuccess],
+                ['Đã hủy', data.countCancel],
+                ['Đang chờ', data.countWaiting],
+                ['Đang gửi', data.countSending]
+            ]);
 
-    function drawStuff() {
+            var pieOptions = { title: `Trạng thái đơn hàng tháng ${data.month}/${data.year}` };
+            var pieChart = new google.visualization.PieChart(document.getElementById('piechart'));
+            pieChart.draw(pieData, pieOptions);
 
-        var d = [['Ngày', 'Doanh Thu']];
-        var yourJavaScriptArray = @Html.Raw(Json.Encode(@ViewBag.dataBarChar));
-        for (var i = 0; i < yourJavaScriptArray.length; i++) {
-            var j = i;
-            var a = ['Ngày' + (i+1), yourJavaScriptArray[i]];
-            d.push(a);
+            // Bar Chart
+            var barDataArray = [['Ngày', 'Doanh Thu']];
+            for (var i = 0; i < data.dailyRevenue.length; i++) {
+                barDataArray.push(['Ngày ' + (i + 1), data.dailyRevenue[i]]);
+            }
+
+            var barData = google.visualization.arrayToDataTable(barDataArray);
+            var barOptions = {
+                chart: { title: `Doanh thu tháng ${data.month}/${data.year}` },
+                bars: 'vertical',
+                legend: { position: 'none' },
+                bar: { groupWidth: "100%" }
+            };
+
+            var barChart = new google.charts.Bar(document.getElementById('chart_div'));
+            barChart.draw(barData, barOptions);
         }
 
-        var data = new google.visualization.arrayToDataTable(d);
+        // Gọi AJAX lấy dữ liệu
+        function loadData() {
+            var month = $('#monthSelect').val();
+            var year = $('#yearSelect').val();
 
-        var options = {
-        title: 'Thống kê theo ngày !',
-        legend: { position: 'none' },
-        chart: {
-            title: 'Thống kê theo ngày !',
-            subtitle: ''
-        },
-            bars: 'vertical', // Required for Material Bar Charts.
-        axes: {
-            x: {
-                0: { side: 'bottom', label: '' } // Top x-axis.
-            }
-        },
-        bar: { groupWidth: "100%" }
-        };
+            $.ajax({
+                url: '/Admin/Dashboard/GetDashboardData',
+                type: 'GET',
+                data: { month: month, year: year },
+                success: function (res) {
+                    if (res.success) {
+                        drawCharts(res);
+                    } else {
+                        alert("Không có dữ liệu thống kê!");
+                    }
+                },
+                error: function () {
+                    alert("Lỗi khi tải dữ liệu thống kê.");
+                }
+            });
+        }
 
-        var chart = new google.charts.Bar(document.getElementById('chart_div'));
-        chart.draw(data, options);
-    };
-    
-</script>
+        // Khi trang load xong
+        $(document).ready(function () {
+            google.charts.setOnLoadCallback(() => loadData());
+            $('#monthSelect, #yearSelect').on('change', loadData);
+        });
+    </script>
 
 
-
+</div>
